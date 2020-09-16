@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Strategy_Pattern_First_Look.Strategies.SalesTax;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Strategy_Pattern_First_Look.Business.Models
@@ -19,59 +20,18 @@ namespace Strategy_Pattern_First_Look.Business.Models
 
         public ShippingDetails ShippingDetails { get; set; }
 
-        public decimal GetTax()
+        public ISalesTaxStrategy SalesTaxStrategy { get; set; }
+
+        public decimal GetTax(ISalesTaxStrategy salesTaxStrategy = default)
         {
-            var destination = ShippingDetails.DestinationCountry.ToLowerInvariant();
+            var strategy = salesTaxStrategy ?? SalesTaxStrategy;
 
-            if(destination == "sweden")
+            if (strategy == null)
             {
-                if (destination == ShippingDetails.OriginCountry.ToLowerInvariant())
-                {
-                    return TotalPrice * 0.25m;
-                }
-
-                #region Tax per item
-                //if (destination == ShippingDetails.OriginCountry.ToLowerInvariant())
-                //{
-                //    decimal totalTax = 0m;
-                //    foreach (var item in LineItems)
-                //    {
-                //        switch (item.Key.ItemType)
-                //        {
-                //            case ItemType.Food:
-                //                totalTax += (item.Key.Price * 0.06m) * item.Value;
-                //                break;
-
-                //            case ItemType.Literature:
-                //                totalTax += (item.Key.Price * 0.08m) * item.Value;
-                //                break;
-
-                //            case ItemType.Service:
-                //            case ItemType.Hardware:
-                //                totalTax += (item.Key.Price * 0.25m) * item.Value;
-                //                break;
-                //        }
-                //    }
-
-                //    return totalTax;
-                //}
-                #endregion
-
-                return 0;
+                return 0M;
             }
 
-            if (destination == "us")
-            {
-                switch (ShippingDetails.DestinationState.ToLowerInvariant())
-                {
-                    case "la": return TotalPrice * 0.095m;
-                    case "ny": return TotalPrice * 0.04m;
-                    case "nyc": return TotalPrice * 0.045m;
-                    default: return 0m;
-                }
-            }
-
-            return 0m;
+            return strategy.GetTaxFor(this);
         }
     }
 
@@ -91,8 +51,8 @@ namespace Strategy_Pattern_First_Look.Business.Models
         public string OriginState { get; set; }
     }
 
-    public enum ShippingStatus 
-    { 
+    public enum ShippingStatus
+    {
         WaitingForPayment,
         ReadyForShippment,
         Shipped
